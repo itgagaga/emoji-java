@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Emoji 配置管理中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 18px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: rgba(102,126,234,0.1);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102,126,234,0.5);
+        }
+
+        .items-list {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .item:hover {
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateX(5px);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .item-emoji {
+            font-size: 2em;
+            margin-right: 12px;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-main {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .item-sub {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .delete-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .delete-btn:hover {
+            background: #ff3344;
+            transform: scale(1.1);
+        }
+
+        .form-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .form-modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102,126,234,0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-emoji {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 2000;
+            animation: slideInRight 0.3s;
+            display: none;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin: 2px;
+        }
+
+        .priority-badge {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #333;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .preview-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f7ff;
+            border-radius: 10px;
+            border: 2px dashed #667eea;
+        }
+
+        .preview-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .preview-result {
+            font-size: 1.2em;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Emoji 配置管理中心</h1>
+            <p>可视化编辑优先级、映射和别名，无需写代码！</p>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="stat-number" id="statPriorities">0</div>
+                <div class="stat-label">优先级规则</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="statEmojis">0</div>
+                <div class="stat-label">自定义Emoji</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="statWords">0</div>
+                <div class="stat-label">词语映射</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="statAliases">0</div>
+                <div class="stat-label">扩展别名</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('priorities')">📊 优先级调整</button>
+            <button class="tab" onclick="switchTab('emojis')">🆕 新增Emoji</button>
+            <button class="tab" onclick="switchTab('words')">📝 词语映射</button>
+            <button class="tab" onclick="switchTab('aliases')">🏷️ 别名扩展</button>
+        </div>
+
+        <div id="prioritiesTab" class="tab-content active">
+            <div class="section-header">
+                <h2 class="section-title">📊 优先级调整</h2>
+                <button class="add-btn" onclick="openModal('priority')">+ 添加规则</button>
+            </div>
+            <p style="color:#666; margin-bottom:15px;">调整特定词汇匹配到Emoji时的排序顺序（数值越大越靠前）</p>
+            <div class="items-list" id="prioritiesList"></div>
+        </div>
+
+        <div id="emojisTab" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title">🆕 新增Emoji</h2>
+                <button class="add-btn" onclick="openModal('emoji')">+ 添加Emoji</button>
+            </div>
+            <p style="color:#666; margin-bottom:15px;">添加系统中没有的全新Emoji字符</p>
+            <div class="items-list" id="emojisList"></div>
+        </div>
+
+        <div id="wordsTab" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title">📝 词语映射</h2>
+                <button class="add-btn" onclick="openModal('word')">+ 添加映射</button>
+            </div>
+            <p style="color:#666; margin-bottom:15px;">建立中文词语与Emoji的直接对应关系（最高优先级）</p>
+            <div class="items-list" id="wordsList"></div>
+        </div>
+
+        <div id="aliasesTab" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title">🏷️ 别名扩展</h2>
+                <button class="add-btn" onclick="openModal('alias')">+ 添加别名</button>
+            </div>
+            <p style="color:#666; margin-bottom:15px;">为现有Emoji添加更多中文别名，提高匹配覆盖率</p>
+            <div class="items-list" id="aliasesList"></div>
+        </div>
+    </div>
+
+    <!-- Priority Modal -->
+    <div id="priorityModal" class="form-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>添加优先级规则</span>
+                <button class="close-modal" onclick="closeModal('priority')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Emoji字符 *</label>
+                <input type="text" class="form-input" id="priorityEmoji" placeholder="如：😀" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">中文词语 *</label>
+                <input type="text" class="form-input" id="priorityWord" placeholder="如：开心" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">优先级 (0-100)</label>
+                <input type="number" class="form-input" id="priorityValue" value="90" min="0" max="100">
+            </div>
+            <div class="form-group">
+                <label class="form-label">说明</label>
+                <input type="text" class="form-input" id="priorityDesc" placeholder="可选：描述这条规则的作用">
+            </div>
+            <button class="submit-btn" onclick="submitPriority()">✅ 添加规则</button>
+        </div>
+    </div>
+
+    <!-- Emoji Modal -->
+    <div id="emojiModal" class="form-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>添加自定义Emoji</span>
+                <button class="close-modal" onclick="closeModal('emoji')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Emoji字符 *</label>
+                <input type="text" class="form-input" id="newEmojiChar" placeholder="如：🧋" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">英文名称 *</label>
+                <input type="text" class="form-input" id="newEmojiName" placeholder="如：bubble tea" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">中文别名 (逗号分隔)</label>
+                <textarea class="form-textarea" id="newEmojiAliases" placeholder="奶茶, 珍珠奶茶, 波霸奶茶"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">英文关键词 (逗号分隔)</label>
+                <textarea class="form-textarea" id="newEmojiKeywords" placeholder="tea, milk, drink"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">分类</label>
+                <select class="form-select" id="newEmojiCategory">
+                    <option value="表情">表情</option>
+                    <option value="手势">手势</option>
+                    <option value="动物">动物</option>
+                    <option value="食物">食物</option>
+                    <option value="活动">活动</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">默认优先级 (0-100)</label>
+                <input type="number" class="form-input" id="newEmojiPriority" value="80" min="0" max="100">
+            </div>
+            <button class="submit-btn" onclick="submitEmoji()">✅ 添加Emoji</button>
+        </div>
+    </div>
+
+    <!-- Word Mapping Modal -->
+    <div id="wordModal" class="form-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>添加词语映射</span>
+                <button class="close-modal" onclick="closeModal('word')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">中文词语 *</label>
+                <input type="text" class="form-input" id="mappingWord" placeholder="如：yyds 或 开心" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">对应的Emoji (逗号分隔) *</label>
+                <textarea class="form-textarea" id="mappingEmojis" placeholder="👑, 🏆&#10;第一个优先级最高"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">分类</label>
+                <select class="form-select" id="mappingCategory">
+                    <option value="网络流行语">网络流行语</option>
+                    <option value="日常用语">日常用语</option>
+                    <option value="社交场景">社交场景</option>
+                    <option value="表情情绪">表情情绪</option>
+                    <option value="食物相关">食物相关</option>
+                    <option value="工作学习">工作学习</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">说明</label>
+                <input type="text" class="form-input" id="mappingDesc" placeholder="可选：描述这个词的含义">
+            </div>
+            <button class="submit-btn" onclick="submitWord()">✅ 添加映射</button>
+        </div>
+    </div>
+
+    <!-- Alias Modal -->
+    <div id="aliasModal" class="form-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>添加别名</span>
+                <button class="close-modal" onclick="closeModal('alias')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">目标Emoji *</label>
+                <input type="text" class="form-input" id="aliasEmoji" placeholder="如：😀" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">新增别名 (逗号分隔) *</label>
+                <textarea class="form-textarea" id="aliasAliases" placeholder="哈哈, 嘿嘿, 嘻嘻"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">分类</label>
+                <select class="form-select" id="aliasCategory">
+                    <option value="笑脸系列">笑脸系列</option>
+                    <option value="手势系列">手势系列</option>
+                    <option value="爱心系列">爱心系列</option>
+                    <option value="动物系列">动物系列</option>
+                    <option value="食物系列">食物系列</option>
+                    <option value="自然天气">自然天气</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <button class="submit-btn" onclick="submitAlias()">✅ 添加别名</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_BASE = '/api/custom';
+        const AUTH_BASE = '/api/auth';
+        let currentTab = 'priorities';
+
+        // ============ 认证管理 ============
+
+        function getAuthToken() {
+            return localStorage.getItem('auth_token') || getCookie('auth_token');
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        async function authenticatedFetch(url, options = {}) {
+            const token = getAuthToken();
+
+            if (!token) {
+                window.location.href = '/aaaa/dskqrb';
+                throw new Error('未登录');
+            }
+
+            options.headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${token}`
+            };
+
+            const response = await fetch(url, options);
+
+            if (response.status === 401) {
+                window.location.href = '/aaaa/dskqrb';
+                throw new Error('会话已过期，请重新登录');
+            }
+
+            return response;
+        }
+
+        async function checkAuthStatus() {
+            try {
+                const token = getAuthToken();
+                if (!token) {
+                    window.location.href = '/aaaa/dskqrb';
+                    return false;
+                }
+
+                const response = await authenticatedFetch(`${AUTH_BASE}/check`);
+                const data = await response.json();
+
+                if (!data.authenticated) {
+                    window.location.href = '/aaaa/dskqrb';
+                    return false;
+                }
+
+                updateUserInfo(data.username);
+                return true;
+
+            } catch (error) {
+                console.error('认证检查失败:', error);
+                window.location.href = '/aaaa/dskqrb';
+                return false;
+            }
+        }
+
+        function updateUserInfo(username) {
+            const header = document.querySelector('.header');
+            if (header && username) {
+                let userInfo = document.getElementById('userInfo');
+                if (!userInfo) {
+                    userInfo = document.createElement('div');
+                    userInfo.id = 'userInfo';
+                    userInfo.style.cssText = `
+                        margin-top: 10px;
+                        font-size: 0.9em;
+                        opacity: 0.8;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        gap: 15px;
+                    `;
+                    header.appendChild(userInfo);
+                }
+                userInfo.innerHTML = `
+                    <span>👤 ${username}</span>
+                    <button onclick="handleLogout()" style="
+                        background: rgba(255,255,255,0.2);
+                        border: 1px solid rgba(255,255,255,0.3);
+                        color: white;
+                        padding: 6px 16px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        font-size: 0.9em;
+                        transition: all 0.3s;
+                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                       onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        🚪 退出登录
+                    </button>
+                `;
+            }
+        }
+
+        async function handleLogout() {
+            if (!confirm('确定要退出登录吗？')) return;
+
+            try {
+                await authenticatedFetch(`${AUTH_BASE}/logout`, {method: 'POST'});
+            } catch (error) {
+                console.error('登出API调用失败:', error);
+            } finally {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('auth_expires');
+                window.location.href = '/aaaa/dskqrb';
+            }
+        }
+
+        // ============ 原有功能（使用authenticatedFetch） ============
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast show ${isError ? 'error' : ''}`;
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 3000);
+        }
+
+        async function loadStats() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/stats`);
+                const stats = await response.json();
+                
+                document.getElementById('statPriorities').textContent = stats.priorities || 0;
+                document.getElementById('statEmojis').textContent = stats.custom_emojis || 0;
+                document.getElementById('statWords').textContent = stats.word_mappings || 0;
+                document.getElementById('statAliases').textContent = stats.total_aliases || 0;
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+
+        async function loadPriorities() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/priorities`);
+                const data = await response.json();
+                const container = document.getElementById('prioritiesList');
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-emoji">📊</div>
+                            <p>还没有优先级规则<br>点击上方按钮添加第一条规则</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = data.map((item, index) => `
+                    <div class="item">
+                        <div class="item-header">
+                            <div style="display:flex;align-items:center;">
+                                <span class="item-emoji">${item.emoji}</span>
+                                <div class="item-info">
+                                    <div class="item-main">'${item.word}' → ${item.emoji}</div>
+                                    <div class="item-sub">${item.description || '无说明'}</div>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span class="priority-badge">⭐ ${item.priority}</span>
+                                <button class="delete-btn" onclick="deletePriority(${index})">×</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载优先级失败:', error);
+                showToast('加载失败', true);
+            }
+        }
+
+        async function loadEmojis() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/emojis`);
+                const data = await response.json();
+                const container = document.getElementById('emojisList');
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-emoji">🆕</div>
+                            <p>还没有自定义Emoji<br>点击上方按钮添加新的Emoji</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = data.map((item, index) => `
+                    <div class="item">
+                        <div class="item-header">
+                            <div style="display:flex;align-items:center;">
+                                <span class="item-emoji">${item.emoji}</span>
+                                <div class="item-info">
+                                    <div class="item-main">${item.name} ${item.emoji}</div>
+                                    <div class="item-sub">
+                                        ${item.aliases.slice(0, 3).map(a => `<span class="tag">${a}</span>`).join('')}
+                                        ${item.aliases.length > 3 ? `<span class="tag">+${item.aliases.length - 3}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span class="tag">${item.category || '未分类'}</span>
+                                <button class="delete-btn" onclick="deleteEmoji(${index})">×</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载Emoji失败:', error);
+                showToast('加载失败', true);
+            }
+        }
+
+        async function loadWords() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/words`);
+                const data = await response.json();
+                const container = document.getElementById('wordsList');
+                const words = Object.keys(data);
+                
+                if (words.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-emoji">📝</div>
+                            <p>还没有词语映射<br>点击上方按钮添加第一个映射</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = words.map(word => {
+                    const item = data[word];
+                    return `
+                        <div class="item">
+                            <div class="item-header">
+                                <div style="display:flex;align-items:center;">
+                                    <span class="item-emoji">${item.emojis[0] || '❓'}</span>
+                                    <div class="item-info">
+                                        <div class="item-main">'${word}' → ${item.emojis.join(' ')}</div>
+                                        <div class="item-sub">
+                                            <span class="tag">${item.category || '未分类'}</span>
+                                            ${item.description ? `- ${item.description}` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="delete-btn" onclick="deleteWord('${word}')">×</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('加载词语映射失败:', error);
+                showToast('加载失败', true);
+            }
+        }
+
+        async function loadAliases() {
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/aliases`);
+                const data = await response.json();
+                const container = document.getElementById('aliasesList');
+                const emojis = Object.keys(data);
+                
+                if (emojis.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-emoji">🏷️</div>
+                            <p>还没有别名扩展<br>点击上方按钮为Emoji添加别名</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = emojis.map(emoji => {
+                    const item = data[emoji];
+                    return `
+                        <div class="item">
+                            <div class="item-header">
+                                <div style="display:flex;align-items:center;">
+                                    <span class="item-emoji">${emoji}</span>
+                                    <div class="item-info">
+                                        <div class="item-main">${item.aliases.length}个别名</div>
+                                        <div class="item-sub">
+                                            ${item.aliases.slice(0, 5).map(a => `<span class="tag">${a}</span>`).join('')}
+                                            ${item.aliases.length > 5 ? `<span class="tag">+${item.aliases.length - 5}</span>` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <span class="tag">${item.category || '未分类'}</span>
+                                    <button class="delete-btn" onclick="deleteAlias('${emoji}')">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('加载别名失败:', error);
+                showToast('加载失败', true);
+            }
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(`${tab}Tab`).classList.add('active');
+            
+            switch(tab) {
+                case 'priorities': loadPriorities(); break;
+                case 'emojis': loadEmojis(); break;
+                case 'words': loadWords(); break;
+                case 'aliases': loadAliases(); break;
+            }
+        }
+
+        function openModal(type) {
+            document.getElementById(`${type}Modal`).classList.add('show');
+        }
+
+        function closeModal(type) {
+            document.getElementById(`${type}Modal`).classList.remove('show');
+        }
+
+        async function submitPriority() {
+            const emoji = document.getElementById('priorityEmoji').value.trim();
+            const word = document.getElementById('priorityWord').value.trim();
+            const priority = parseInt(document.getElementById('priorityValue').value);
+            const description = document.getElementById('priorityDesc').value.trim();
+
+            if (!emoji || !word) {
+                showToast('请填写必填项', true);
+                return;
+            }
+
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/priorities`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({emoji, word, priority, description})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message);
+                    closeModal('priority');
+                    loadPriorities();
+                    loadStats();
+                    
+                    document.getElementById('priorityEmoji').value = '';
+                    document.getElementById('priorityWord').value = '';
+                    document.getElementById('priorityDesc').value = '';
+                } else {
+                    showToast(result.message || '添加失败', true);
+                }
+            } catch (error) {
+                showToast('请求失败', true);
+            }
+        }
+
+        async function deletePriority(index) {
+            if (!confirm('确定要删除这条规则吗？')) return;
+
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/priorities/${index}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message);
+                    loadPriorities();
+                    loadStats();
+                } else {
+                    showToast(result.message || '删除失败', true);
+                }
+            } catch (error) {
+                showToast('请求失败', true);
+            }
+        }
+
+        async function submitEmoji() {
+            const emoji = document.getElementById('newEmojiChar').value.trim();
+            const name = document.getElementById('newEmojiName').value.trim();
+            const aliasesText = document.getElementById('newEmojiAliases').value;
+            const keywordsText = document.getElementById('newEmojiKeywords').value;
+            const category = document.getElementById('newEmojiCategory').value;
+            const priority = parseInt(document.getElementById('newEmojiPriority').value);
+
+            if (!emoji || !name) {
+                showToast('请填写必填项', true);
+                return;
+            }
+
+            const aliases = aliasesText.split(',').map(a => a.trim()).filter(a => a);
+            const keywords = keywordsText.split(',').map(k => k.trim()).filter(k => k);
+
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/emojis`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({emoji, name, aliases, keywords, category, priority})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message);
+                    closeModal('emoji');
+                    loadEmojis();
+                    loadStats();
+                    
+                    ['newEmojiChar', 'newEmojiName', 'newEmojiAliases', 'newEmojiKeywords'].forEach(id => {
+                        document.getElementById(id).value = '';
+                    });
+                } else {
+                    showToast(result.message || '添加失败', true);
+                }
+            } catch (error) {
+                showToast('请求失败', true);
+            }
+        }
+
+        async function deleteEmoji(index) {
+            if (!confirm('确定要删除这个Emoji吗？')) return;
+
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/emojis/${index}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message);
+                    loadEmojis();
+                    loadStats();
+                } else {
+                    showToast(result.message || '删除失败', true);
+                }
+            } catch (error) {
+                showToast('请求失败', true);
+            }
+        }
+
+        async function submitWord() {
+            const word = document.getElementById('mappingWord').value.trim();
+            const emojisText = document.getElementById('mappingEmojis').value.trim();
+            const category = document.getElementById('mappingCategory').value;
+            const description = document.getElementById('mappingDesc').value.trim();
+
+            if (!word || !emojisText) {
+                showToast('请填写必填项', true);
+                return;
+            }
+
+            const emojis = emojisText.split(',').map(e => e.trim()).filter(e => e);
+
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/words`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({word, emojis, category, description})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message);
+                    closeModal('word');
+                    loadWords();
+                    loadStats();
+                    
+                    document.getElementById('mappingWord').value = '';
+                    document.getElementById('mappingEmojis').value = '';
+                    document.getElementById('mappingDesc').value = '';
+                } else {
+                    showToast(result.message || '添加失败', true);
+                }
+            } catch (error) {
+                showToast('请求失败', true);
+            }
+        }
+
+        async function deleteWord(word) {
+            if (!confirm(`确定要删除"${word}"的映射吗？`)) return;
+
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/words/${encodeURIComponent(word)}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message);
+                    loadWords();
+                    loadStats();
+                } else {
+                    showToast(result.message || '删除失败', true);
+                }
+            } catch (error) {
+                showToast('请求失败', true);
+            }
+        }
+
+        async function submitAlias() {
+            const emoji = document.getElementById('aliasEmoji').value.trim();
+            const aliasesText = document.getElementById('aliasAliases').value.trim();
+            const category = document.getElementById('aliasCategory').value;
+
+            if (!emoji || !aliasesText) {
+                showToast('请填写必填项', true);
+                return;
+            }
+
+            const aliases = aliasesText.split(',').map(a => a.trim()).filter(a => a);
+
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/aliases`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({emoji, aliases, category})
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message);
+                    closeModal('alias');
+                    loadAliases();
+                    loadStats();
+                    
+                    document.getElementById('aliasEmoji').value = '';
+                    document.getElementById('aliasAliases').value = '';
+                } else {
+                    showToast(result.message || '添加失败', true);
+                }
+            } catch (error) {
+                showToast('请求失败', true);
+            }
+        }
+
+        async function deleteAlias(emoji) {
+            if (!confirm(`确定要删除${emoji}的所有别名吗？`)) return;
+
+            try {
+                const response = await authenticatedFetch(`${API_BASE}/aliases/${encodeURIComponent(emoji)}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(result.message);
+                    loadAliases();
+                    loadStats();
+                } else {
+                    showToast(result.message || '删除失败', true);
+                }
+            } catch (error) {
+                showToast('请求失败', true);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            // 先检查登录状态
+            const isAuthenticated = await checkAuthStatus();
+            if (isAuthenticated) {
+                loadStats();
+                loadPriorities();
+            }
+        });
+    </script>
+</body>
+</html>

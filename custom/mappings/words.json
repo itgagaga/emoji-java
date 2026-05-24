@@ -1,0 +1,183 @@
+{
+  "yyds": {
+    "emojis": [
+      "👑",
+      "🏆"
+    ],
+    "category": "网络流行语",
+    "description": "永远的神"
+  },
+  "绝绝子": {
+    "emojis": [
+      "✨",
+      "💖",
+      "🌟"
+    ],
+    "category": "网络流行语",
+    "description": "太绝了"
+  },
+  "躺平": {
+    "emojis": [
+      "😴",
+      "🛌",
+      "🧘"
+    ],
+    "category": "网络流行语",
+    "description": "不再努力了"
+  },
+  "内卷": {
+    "emojis": [
+      "📚",
+      "😫",
+      "🔥"
+    ],
+    "category": "网络流行语",
+    "description": "过度竞争"
+  },
+  "摆烂": {
+    "emojis": [
+      "🗑️",
+      "💩",
+      "😤"
+    ],
+    "category": "网络流行语",
+    "描述": "放弃治疗"
+  },
+  "破防": {
+    "emojis": [
+      "😭",
+      "💔",
+      "😱"
+    ],
+    "category": "网络流行语",
+    "description": "情绪崩溃"
+  },
+  "emo": {
+    "emojis": [
+      "😢",
+      "☔",
+      "🎭"
+    ],
+    "category": "网络流行语",
+    "description": "情绪化"
+  },
+  "牛逼": {
+    "emojis": [
+      "🐮",
+      "🔥",
+      "💪"
+    ],
+    "category": "日常用语",
+    "description": "很厉害"
+  },
+  "厉害": {
+    "emojis": [
+      "👍",
+      "🌟",
+      "⭐"
+    ],
+    "category": "日常用语",
+    "description": "优秀"
+  },
+  "给力": {
+    "emojis": [
+      "💪",
+      "👍",
+      "⚡"
+    ],
+    "category": "日常用语",
+    "description": "很棒"
+  },
+  "点赞": {
+    "emojis": [
+      "👍",
+      "❤️",
+      "👏"
+    ],
+    "category": "社交场景",
+    "description": "表示赞同"
+  },
+  "关注": {
+    "emojis": [
+      "👀",
+      "⭐",
+      "❤️"
+    ],
+    "category": "社交场景",
+    "description": "感兴趣"
+  },
+  "收藏": {
+    "emojis": [
+      "⭐",
+      "📌",
+      "💾"
+    ],
+    "category": "社交场景",
+    "description": "保存内容"
+  },
+  "早安": {
+    "emojis": [
+      "🌅",
+      "☀️",
+      "🌞"
+    ],
+    "category": "社交场景",
+    "description": "早上问候"
+  },
+  "晚安": {
+    "emojis": [
+      "🌙",
+      "🌜",
+      "😴"
+    ],
+    "category": "社交场景",
+    "description": "晚上问候"
+  },
+  "开心": {
+    "emojis": [
+      "😀",
+      "😄",
+      "😆",
+      "🥳"
+    ],
+    "category": "表情情绪",
+    "description": "快乐"
+  },
+  "难过": {
+    "emojis": [
+      "😢",
+      "😞",
+      "😔",
+      "💔"
+    ],
+    "category": "表情情绪",
+    "description": "伤心"
+  },
+  "生气": {
+    "emojis": [
+      "😠",
+      "😡",
+      "🤬",
+      "💢"
+    ],
+    "category": "表情情绪",
+    "description": "愤怒"
+  },
+  "奶茶": {
+    "emojis": [
+      "🧋",
+      "🥤",
+      "☕"
+    ],
+    "category": "食物相关",
+    "description": "饮料"
+  },
+  "测试映射": {
+    "emojis": [
+      "🧪",
+      "🔬"
+    ],
+    "category": "测试",
+    "description": "自动化测试"
+  }
+}

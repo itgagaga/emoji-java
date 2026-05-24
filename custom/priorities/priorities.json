@@ -1,0 +1,74 @@
+[
+  {
+    "emoji": "😀",
+    "word": "开心",
+    "priority": 95,
+    "description": "笑脸最直观"
+  },
+  {
+    "emoji": "😄",
+    "word": "开心",
+    "priority": 90,
+    "description": "大笑表情"
+  },
+  {
+    "emoji": "🙋",
+    "word": "开心",
+    "priority": 70,
+    "description": "举手降低优先级"
+  },
+  {
+    "emoji": "👍",
+    "word": "好",
+    "priority": 100,
+    "description": "竖大拇指最高"
+  },
+  {
+    "emoji": "👌",
+    "word": "好",
+    "priority": 85,
+    "description": "OK手势"
+  },
+  {
+    "emoji": "✅",
+    "word": "好",
+    "priority": 80,
+    "description": "对勾符号"
+  },
+  {
+    "emoji": "😂",
+    "word": "笑",
+    "priority": 100,
+    "description": "笑哭最常用"
+  },
+  {
+    "emoji": "😆",
+    "word": "笑",
+    "priority": 95,
+    "description": "大笑第二"
+  },
+  {
+    "emoji": "😊",
+    "word": "笑",
+    "priority": 90,
+    "description": "微笑第三"
+  },
+  {
+    "priority": 100,
+    "word": "??",
+    "description": "????",
+    "emoji": "??"
+  },
+  {
+    "emoji": "🎉",
+    "word": "测试词",
+    "priority": 99,
+    "description": "自动化测试"
+  },
+  {
+    "emoji": "🎉",
+    "word": "功能测试",
+    "priority": 99,
+    "description": "自动化验证测试"
+  }
+]

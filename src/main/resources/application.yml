@@ -1,0 +1,38 @@
+server:
+  port: 8080
+
+spring:
+  jackson:
+    default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+# JWT 配置
+security:
+  jwt:
+    secret: emoji-converter-secret-key-must-be-at-least-32-characters-long!
+    expiration: 3600000
+
+  auth:
+    login-path: /aaaa/dskqrb
+    username: emoji
+    password: emoji98540
+
+# 匹配器配置（对应 Python 的 config.py）
+matcher:
+  max-window: 4
+  max-candidates-per-key: 80
+  enable-fuzzy: true
+  enable-single-syllable: true
+  tts-priority-bonus: 20
+  position-first-bonus: 20
+  position-last-bonus: 10
+  fuzzy-priority-penalty: 50
+
+# 日志配置
+logging:
+  level:
+    com.emoji.converter: DEBUG
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

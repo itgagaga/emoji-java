@@ -1,0 +1,9 @@
+{
+  "username": "emoji",
+  "password": "6b5d2a66ca2ec23a200c05b9de23de34$b40735975cb3ee3a35b4bbaf29a45cf174147bb228a951a58950a40f61722ba3",
+  "session_timeout": 3600,
+  "allowed_ips": [],
+  "enable_rate_limit": true,
+  "max_login_attempts": 5,
+  "lockout_duration": 900
+}
