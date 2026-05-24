@@ -27,6 +27,7 @@ public class EmojiConverterService {
     private final PinyinUtil pinyinUtil;
     private final FuzzyPinyinUtil fuzzyPinyinUtil;
     private final AdminMappingService adminMappingService;
+    private final OriginalOverrideService originalOverrideService;
 
     @Value("${matcher.max-window:4}")
     private int maxWindow;
@@ -501,7 +502,46 @@ public class EmojiConverterService {
             return null;
         }
 
-        return Collections.max(candidates, Comparator.comparingInt(this::getPriority));
+        // 过滤掉被禁用的原始数据
+        List<Map<String, Object>> filteredCandidates = filterDisabledOriginals(candidates);
+        
+        if (filteredCandidates.isEmpty()) {
+            return null;
+        }
+
+        return Collections.max(filteredCandidates, Comparator.comparingInt(this::getPriority));
+    }
+    
+    private List<Map<String, Object>> filterDisabledOriginals(List<Map<String, Object>> candidates) {
+        return candidates.stream()
+            .filter(candidate -> {
+                // 只检查原始数据（非管理员映射）
+                String indexType = (String) candidate.getOrDefault("index_type", "");
+                if (indexType.startsWith("admin_")) {
+                    return true; // 管理员映射不过滤（已经在getEnabledMappingsByKey中过滤了）
+                }
+                
+                // 检查是否被覆盖层禁用
+                String sourceWord = (String) candidate.get("source_word");
+                String sourcePinyin = (String) candidate.get("source_pinyin");
+                
+                if (sourceWord != null && !sourceWord.isEmpty()) {
+                    // 词语映射
+                    Boolean enabled = originalOverrideService.getOverriddenEnabled("word", sourceWord);
+                    if (enabled != null && !enabled) {
+                        return false; // 被禁用
+                    }
+                } else if (sourcePinyin != null && !sourcePinyin.isEmpty()) {
+                    // 拼音映射
+                    Boolean enabled = originalOverrideService.getOverriddenEnabled("pinyin", sourcePinyin);
+                    if (enabled != null && !enabled) {
+                        return false; // 被禁用
+                    }
+                }
+                
+                return true;
+            })
+            .collect(Collectors.toList());
     }
 
     private String getAdminMappingIndexType(AdminMapping adminMapping) {

@@ -621,6 +621,79 @@
             <!-- Pagination -->
             <div style="margin-top: 20px; text-align: center;" id="pagination"></div>
         </div>
+
+        <!-- View All Mappings Section (NEW) -->
+        <div class="main-content">
+            <h2 class="section-title">🔍 查看全部映射</h2>
+            
+            <!-- Stats Bar for All Mappings -->
+            <div id="allMappingsStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea10, #764ba210); padding: 15px; border-radius: 12px; text-align: center; border-left: 4px solid #667eea;">
+                    <div style="font-size: 24px; font-weight: bold; color: #667eea;" id="totalAllCount">0</div>
+                    <div style="color: #666; font-size: 13px;">总映射数</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); padding: 15px; border-radius: 12px; text-align: center; border-left: 4px solid #4caf50;">
+                    <div style="font-size: 24px; font-weight: bold; color: #2e7d32;" id="originalCount">0</div>
+                    <div style="color: #666; font-size: 13px;">原始数据</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #fff3e0, #ffe0b2); padding: 15px; border-radius: 12px; text-align: center; border-left: 4px solid #ff9800;">
+                    <div style="font-size: 24px; font-weight: bold; color: #ef6c00;" id="adminAllCount">0</div>
+                    <div style="color: #666; font-size: 13px;">管理员自定义</div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar" style="margin-bottom: 20px;">
+                <div class="search-box">
+                    <input type="text" id="allSearchInput" placeholder="🔍 搜索 Key/Emoji/描述..." onkeyup="debounceAllSearch()">
+                </div>
+                <div class="filter-group">
+                    <select id="sourceFilter" onchange="loadAllMappings(1)">
+                        <option value="">全部来源</option>
+                        <option value="original">原始数据</option>
+                        <option value="admin">管理员自定义</option>
+                    </select>
+                    <select id="typeFilterAll" onchange="loadAllMappings(1)">
+                        <option value="">全部类型</option>
+                        <option value="pinyin">拼音映射</option>
+                        <option value="word">词语映射</option>
+                    </select>
+                    <button class="btn btn-success btn-sm" onclick="loadAllMappings(1)">🔄 刷新</button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <table class="mappings-table" id="allMappingsTable">
+                <thead>
+                    <tr>
+                        <th>来源</th>
+                        <th>类型</th>
+                        <th>Key</th>
+                        <th>Emoji</th>
+                        <th>描述</th>
+                        <th>优先级</th>
+                        <th>索引类型</th>
+                        <th>状态</th>
+                        <th style="width: 150px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="allMappingsBody">
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <div class="icon">📊</div>
+                            <h3>加载中...</h3>
+                            <p>正在获取所有映射数据</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;" id="allPagination">
+                <div id="allPageInfo"></div>
+                <div id="allPageControls"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -943,6 +1016,342 @@
         function hideLoading() {
             const overlay = document.getElementById('loadingOverlay');
             if (overlay) overlay.remove();
+        }
+
+        // ========== View All Mappings Functions ==========
+        let allCurrentPage = 1;
+        const allPageSize = 20;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStats();
+            loadMappings();
+            loadAllMappings(1);
+        });
+
+        function debounceAllSearch() {
+            clearTimeout(window.allSearchTimeout);
+            window.allSearchTimeout = setTimeout(() => loadAllMappings(1), 500);
+        }
+
+        async function loadAllMappings(page = 1) {
+            allCurrentPage = page;
+            
+            try {
+                let url = `${API_BASE}/all?page=${page}&size=${allPageSize}`;
+                
+                const sourceFilter = document.getElementById('sourceFilter').value;
+                const typeFilter = document.getElementById('typeFilterAll').value;
+                const keyword = document.getElementById('allSearchInput').value.trim();
+                
+                if (sourceFilter) url += `&source=${encodeURIComponent(sourceFilter)}`;
+                if (typeFilter) url += `&type=${encodeURIComponent(typeFilter)}`;
+                if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+                
+                const response = await fetch(url, {
+                    headers: getHeaders()
+                });
+                
+                if (response.status === 401) {
+                    window.location.href = '/aaaa/dskqrb';
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderAllMappings(data.mappings || [], data.pagination, data.stats);
+                } else {
+                    showToast(data.error || '加载失败', 'error');
+                }
+            } catch (error) {
+                console.error('加载全部映射失败:', error);
+                showToast('网络错误，请重试', 'error');
+            }
+        }
+
+        function renderAllMappings(mappings, pagination, stats) {
+            // Update Stats
+            if (stats) {
+                animateValue('totalAllCount', 0, pagination.totalElements, 800);
+                animateValue('originalCount', 0, stats.originalCount, 800);
+                animateValue('adminAllCount', 0, stats.adminCount, 800);
+            }
+            
+            // Render Table
+            const tbody = document.getElementById('allMappingsBody');
+            
+            if (mappings.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <div class="icon">📭</div>
+                            <h3>暂无数据</h3>
+                            <p>${document.getElementById('allSearchInput').value ? '没有找到匹配的映射' : '暂无映射数据'}</p>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('allPageInfo').innerHTML = '';
+                document.getElementById('allPageControls').innerHTML = '';
+                return;
+            }
+            
+            tbody.innerHTML = mappings.map(m => {
+                const sourceBadge = m.source === 'admin' 
+                    ? '<span style="background: #ff9800; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">管理员</span>'
+                    : '<span style="background: #4caf50; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;">原始</span>';
+                
+                const typeLabel = m.type === 'pinyin' ? '拼音' : '词语';
+                const typeClass = m.type === 'pinyin' ? 'type-pinyin_exact' : 'type-word';
+                
+                const indexTypeLabels = {
+                    'word': '直接词',
+                    'pinyin_exact': '拼音精准',
+                    'pinyin_syllable': '单音节',
+                    'pinyin_fuzzy': '模糊音'
+                };
+                const indexTypeLabel = indexTypeLabels[m.indexType] || m.indexType;
+                const indexTypeClass = `type-${m.indexType}`;
+                
+                // Status Badge with Toggle Button (for all mappings)
+                let statusCell = '';
+                statusCell = m.enabled
+                    ? `<button class="btn btn-sm" style="background: #4caf50; color: white;" onclick="toggleMappingStatus('${m.id}', '${m.type}', '${m.key}', false, this)">✅ 启用</button>`
+                    : `<button class="btn btn-sm" style="background: #f44336; color: white;" onclick="toggleMappingStatus('${m.id}', '${m.type}', '${m.key}', true, this)">❌ 禁用</button>`;
+                
+                // Action Buttons (for all mappings)
+                let actionCell = '';
+                actionCell = `
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button class="btn btn-sm btn-primary" onclick="showPriorityEditor('${m.id}', '${m.type}', '${m.key}', ${m.priority}, '${escapeHtml(m.key)}')" title="修改优先级">⚙️</button>
+                        ${statusCell}
+                    </div>
+                `;
+                
+                return `
+                    <tr id="row-${m.id}" class="${m.source === 'admin' ? 'admin-row' : ''}">
+                        <td>${sourceBadge}</td>
+                        <td><span class="dropdown-type ${typeClass}">${typeLabel}</span></td>
+                        <td style="font-family: monospace; font-weight: 600;">${escapeHtml(m.key)}</td>
+                        <td><span style="font-size: 24px;">${m.emoji}</span></td>
+                        <td>${escapeHtml(m.description || '-')}</td>
+                        <td><strong id="priority-${m.id}">${m.priority}</strong></td>
+                        <td><span class="dropdown-type ${indexTypeClass}">${indexTypeLabel}</span></td>
+                        <td>${statusCell}</td>
+                        <td>${actionCell}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Render Pagination
+            renderAllPagination(pagination);
+        }
+
+        // ========== Action Functions ==========
+        
+        async function toggleMappingStatus(mappingId, type, key, newEnabled, buttonElement) {
+            try {
+                const originalText = buttonElement.innerHTML;
+                buttonElement.disabled = true;
+                buttonElement.innerHTML = '⏳...';
+                
+                let response;
+                
+                if (mappingId.startsWith('adm_')) {
+                    // 管理员自定义映射
+                    response = await fetch(`${API_BASE}/${mappingId}/toggle`, {
+                        method: 'PUT',
+                        headers: getHeaders(),
+                        body: JSON.stringify({ enabled: newEnabled })
+                    });
+                } else if (mappingId.startsWith('orig-')) {
+                    // 原始数据映射
+                    response = await fetch(`${API_BASE}/original/${encodeURIComponent(type)}/${encodeURIComponent(key)}/toggle`, {
+                        method: 'PUT',
+                        headers: getHeaders(),
+                        body: JSON.stringify({ enabled: newEnabled })
+                    });
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    
+                    // Update UI
+                    if (newEnabled) {
+                        buttonElement.style.background = '#4caf50';
+                        buttonElement.innerHTML = '✅ 启用';
+                        buttonElement.setAttribute('onclick', `toggleMappingStatus('${mappingId}', '${type}', '${key}', false, this)`);
+                        
+                        // Re-enable row
+                        const row = document.getElementById(`row-${mappingId}`);
+                        if (row) row.style.opacity = '1';
+                    } else {
+                        buttonElement.style.background = '#f44336';
+                        buttonElement.innerHTML = '❌ 禁用';
+                        buttonElement.setAttribute('onclick', `toggleMappingStatus('${mappingId}', '${type}', '${key}', true, this)`);
+                        
+                        // Dim disabled row
+                        const row = document.getElementById(`row-${mappingId}`);
+                        if (row) row.style.opacity = '0.5';
+                    }
+                } else {
+                    showToast(data.error || '操作失败', 'error');
+                    buttonElement.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('切换状态失败:', error);
+                showToast('网络错误，请重试', 'error');
+                buttonElement.innerHTML = originalText;
+            } finally {
+                buttonElement.disabled = false;
+            }
+        }
+
+        function showPriorityEditor(mappingId, type, key, currentPriority, keyName) {
+            const priorityCell = document.getElementById(`priority-${mappingId}`);
+            
+            // Create editor
+            const editorHtml = `
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <input type="number" id="priority-input-${mappingId}" 
+                           value="${currentPriority}" 
+                           min="150" max="999" 
+                           style="width: 70px; padding: 4px; border: 2px solid #667eea; border-radius: 6px; font-weight: bold;">
+                    <button class="btn btn-sm" style="background: #4caf50; color: white;" onclick="savePriority('${mappingId}', '${type}', '${key}')">✓</button>
+                    <button class="btn btn-sm" style="background: #f44336; color: white;" onclick="cancelPriorityEdit('${mappingId}', ${currentPriority})">✕</button>
+                </div>
+            `;
+            
+            priorityCell.innerHTML = editorHtml;
+            
+            // Focus input and select all
+            setTimeout(() => {
+                const input = document.getElementById(`priority-input-${mappingId}`);
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            }, 100);
+        }
+
+        async function savePriority(mappingId, type, key) {
+            const input = document.getElementById(`priority-input-${mappingId}`);
+            const newPriority = parseInt(input.value);
+            
+            if (isNaN(newPriority) || newPriority < 150 || newPriority > 999) {
+                showToast('优先级必须在 150-999 之间', 'error');
+                return;
+            }
+            
+            try {
+                let response;
+                
+                if (mappingId.startsWith('adm_')) {
+                    // 管理员自定义映射
+                    response = await fetch(`${API_BASE}/${mappingId}/priority`, {
+                        method: 'PUT',
+                        headers: getHeaders(),
+                        body: JSON.stringify({ priority: newPriority })
+                    });
+                } else if (mappingId.startsWith('orig-')) {
+                    // 原始数据映射
+                    response = await fetch(`${API_BASE}/original/${encodeURIComponent(type)}/${encodeURIComponent(key)}/priority`, {
+                        method: 'PUT',
+                        headers: getHeaders(),
+                        body: JSON.stringify({ priority: newPriority })
+                    });
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`优先级已更新为 ${newPriority}`, 'success');
+                    
+                    // Update display
+                    const priorityCell = document.getElementById(`priority-${mappingId}`);
+                    priorityCell.innerHTML = `<strong>${newPriority}</strong>`;
+                    
+                    // Refresh to see changes in order
+                    loadAllMappings(allCurrentPage);
+                } else {
+                    showToast(data.error || '更新失败', 'error');
+                }
+            } catch (error) {
+                console.error('更新优先级失败:', error);
+                showToast('网络错误，请重试', 'error');
+            }
+        }
+
+        function cancelPriorityEdit(mappingId, originalValue) {
+            const priorityCell = document.getElementById(`priority-${mappingId}`);
+            priorityCell.innerHTML = `<strong>${originalValue}</strong>`;
+        }
+
+        // Keyboard shortcut for priority input
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('priority-input-')) {
+                const mappingId = e.target.id.replace('priority-input-', '');
+                savePriority(mappingId);
+            }
+            if (e.key === 'Escape' && e.target.id && e.target.id.startsWith('priority-input-')) {
+                e.target.blur();
+            }
+        });
+
+        function renderAllPagination(pagination) {
+            const pageInfo = document.getElementById('allPageInfo');
+            const pageControls = document.getElementById('allPageControls');
+            
+            pageInfo.innerHTML = `
+                <span style="color: #666;">
+                    显示第 <strong>${pagination.page * pagination.size - pagination.size + 1}</strong> - 
+                    <strong>${Math.min(pagination.page * pagination.size, pagination.totalElements)}</strong> 条，
+                    共 <strong>${pagination.totalElements}</strong> 条记录
+                </span>
+            `;
+            
+            if (pagination.totalPages <= 1) {
+                pageControls.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            // Previous Button
+            html += `<button class="btn btn-sm" onclick="loadAllMappings(${pagination.page - 1})" 
+                      ${!pagination.hasPrev ? 'disabled style="opacity: 0.5;"' : ''}>◀ 上一页</button>`;
+            
+            // Page Numbers
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, pagination.page - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            if (startPage > 1) {
+                html += `<button class="btn btn-sm" onclick="loadAllMappings(1)">1</button>`;
+                if (startPage > 2) html += `<span style="padding: 5px;">...</span>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === pagination.page;
+                html += `<button class="btn btn-sm" onclick="loadAllMappings(${i})" 
+                          style="${isActive ? 'background: #667eea; color: white;' : ''}">${i}</button>`;
+            }
+            
+            if (endPage < pagination.totalPages) {
+                if (endPage < pagination.totalPages - 1) html += `<span style="padding: 5px;">...</span>`;
+                html += `<button class="btn btn-sm" onclick="loadAllMappings(${pagination.totalPages})">${pagination.totalPages}</button>`;
+            }
+            
+            // Next Button
+            html += `<button class="btn btn-sm" onclick="loadAllMappings(${pagination.page + 1})" 
+                      ${!pagination.hasNext ? 'disabled style="opacity: 0.5;"' : ''}>下一页 ▶</button>`;
+            
+            pageControls.innerHTML = html;
         }
     </script>
 </body>
