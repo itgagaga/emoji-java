@@ -1,0 +1,21 @@
+[ {
+  "id" : "adm_1779602522687_113856",
+  "type" : "pinyin",
+  "key" : "shu",
+  "emoji" : "\uD83D\uDCDA",
+  "description" : "书籍",
+  "priority" : 180,
+  "enabled" : true,
+  "createdAt" : [ 2026, 5, 24, 14, 2, 2, 687679300 ],
+  "updatedAt" : [ 2026, 5, 24, 14, 2, 2, 688688400 ]
+}, {
+  "id" : "adm_1779602931406_-903049057",
+  "type" : "pinyin",
+  "key" : "shu ji",
+  "emoji" : "\uD83D\uDCDA",
+  "description" : "书籍(词语)",
+  "priority" : 190,
+  "enabled" : true,
+  "createdAt" : [ 2026, 5, 24, 14, 8, 51, 406016900 ],
+  "updatedAt" : [ 2026, 5, 24, 14, 8, 51, 408531600 ]
+} ]

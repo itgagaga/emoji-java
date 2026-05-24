@@ -3,6 +3,7 @@ package com.emoji.converter.service;
 import com.emoji.converter.model.dto.CandidateDTO;
 import com.emoji.converter.model.dto.ConvertRequest;
 import com.emoji.converter.model.dto.ConvertResponse;
+import com.emoji.converter.model.AdminMapping;
 import com.emoji.converter.util.FuzzyPinyinUtil;
 import com.emoji.converter.util.PinyinUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class EmojiConverterService {
     private final JsonDataService jsonDataService;
     private final PinyinUtil pinyinUtil;
     private final FuzzyPinyinUtil fuzzyPinyinUtil;
+    private final AdminMappingService adminMappingService;
 
     @Value("${matcher.max-window:4}")
     private int maxWindow;
@@ -176,41 +178,19 @@ public class EmojiConverterService {
             return null;
         }
 
-        Map<String, List<Map<String, Object>>> wordIndex = jsonDataService.getWordIndex();
-
-        if (wordIndex.containsKey(chunk)) {
-            return pickBest(wordIndex.get(chunk));
-        }
-
-        String pinyinKey = toPinyinCached(chunk);
-        if (pinyinKey.isEmpty()) {
-            return null;
-        }
-
-        Map<String, List<Map<String, Object>>> pinyinExactIndex = jsonDataService.getPinyinExactIndex();
-        if (pinyinExactIndex.containsKey(pinyinKey)) {
-            return pickBest(pinyinExactIndex.get(pinyinKey));
-        }
-
-        if (enableFuzzy) {
-            Map<String, List<Map<String, Object>>> pinyinFuzzyIndex = jsonDataService.getPinyinFuzzyIndex();
-            if (pinyinFuzzyIndex.containsKey(pinyinKey)) {
-                return pickBest(pinyinFuzzyIndex.get(pinyinKey));
-            }
-        }
-
-        if (enableSingleSyllable && chunk.length() == 1) {
-            Map<String, List<Map<String, Object>>> pinyinSyllableIndex = jsonDataService.getPinyinSyllableIndex();
-            if (pinyinSyllableIndex.containsKey(pinyinKey)) {
-                return pickBest(pinyinSyllableIndex.get(pinyinKey));
-            }
-        }
-
-        return null;
-    }
-
-    public List<CandidateDTO> lookupAllCandidates(String chunk) {
         List<Map<String, Object>> allCandidates = new ArrayList<>();
+
+        List<AdminMapping> adminMappings = adminMappingService.getEnabledMappingsByKey(chunk);
+        for (AdminMapping adminMapping : adminMappings) {
+            Map<String, Object> candidate = new LinkedHashMap<>();
+            candidate.put("emoji", adminMapping.getEmoji());
+            candidate.put("source_word", adminMapping.getKey());
+            candidate.put("source_pinyin", "pinyin".equals(adminMapping.getType()) ? adminMapping.getKey() : toPinyinCached(adminMapping.getKey()));
+            candidate.put("priority", adminMapping.getPriority());
+            candidate.put("index_type", getAdminMappingIndexType(adminMapping));
+            candidate.put("description", adminMapping.getDescription());
+            allCandidates.add(candidate);
+        }
 
         Map<String, List<Map<String, Object>>> wordIndex = jsonDataService.getWordIndex();
         if (wordIndex.containsKey(chunk)) {
@@ -219,6 +199,79 @@ public class EmojiConverterService {
 
         String pinyinKey = toPinyinCached(chunk);
         if (!pinyinKey.isEmpty()) {
+            List<AdminMapping> adminPinyinMappings = adminMappingService.getEnabledMappingsByKey(pinyinKey);
+            for (AdminMapping adminMapping : adminPinyinMappings) {
+                Map<String, Object> candidate = new LinkedHashMap<>();
+                candidate.put("emoji", adminMapping.getEmoji());
+                candidate.put("source_word", adminMapping.getKey());
+                candidate.put("source_pinyin", pinyinKey);
+                candidate.put("priority", adminMapping.getPriority());
+                candidate.put("index_type", getAdminMappingIndexType(adminMapping));
+                candidate.put("description", adminMapping.getDescription());
+                allCandidates.add(candidate);
+            }
+
+            Map<String, List<Map<String, Object>>> pinyinExactIndex = jsonDataService.getPinyinExactIndex();
+            if (pinyinExactIndex.containsKey(pinyinKey)) {
+                allCandidates.addAll(pinyinExactIndex.get(pinyinKey));
+            }
+
+            if (enableFuzzy) {
+                Map<String, List<Map<String, Object>>> pinyinFuzzyIndex = jsonDataService.getPinyinFuzzyIndex();
+                if (pinyinFuzzyIndex.containsKey(pinyinKey)) {
+                    allCandidates.addAll(pinyinFuzzyIndex.get(pinyinKey));
+                }
+            }
+
+            if (enableSingleSyllable && chunk.length() == 1) {
+                Map<String, List<Map<String, Object>>> pinyinSyllableIndex = jsonDataService.getPinyinSyllableIndex();
+                if (pinyinSyllableIndex.containsKey(pinyinKey)) {
+                    allCandidates.addAll(pinyinSyllableIndex.get(pinyinKey));
+                }
+            }
+        }
+
+        if (allCandidates.isEmpty()) {
+            return null;
+        }
+
+        return pickBest(allCandidates);
+    }
+
+    public List<CandidateDTO> lookupAllCandidates(String chunk) {
+        List<Map<String, Object>> allCandidates = new ArrayList<>();
+
+        List<AdminMapping> adminMappings = adminMappingService.getEnabledMappingsByKey(chunk);
+        for (AdminMapping adminMapping : adminMappings) {
+            Map<String, Object> candidate = new LinkedHashMap<>();
+            candidate.put("emoji", adminMapping.getEmoji());
+            candidate.put("source_word", adminMapping.getKey());
+            candidate.put("source_pinyin", "pinyin".equals(adminMapping.getType()) ? adminMapping.getKey() : toPinyinCached(adminMapping.getKey()));
+            candidate.put("priority", adminMapping.getPriority());
+            candidate.put("index_type", getAdminMappingIndexType(adminMapping));
+            candidate.put("description", adminMapping.getDescription());
+            allCandidates.add(candidate);
+        }
+
+        Map<String, List<Map<String, Object>>> wordIndex = jsonDataService.getWordIndex();
+        if (wordIndex.containsKey(chunk)) {
+            allCandidates.addAll(wordIndex.get(chunk));
+        }
+
+        String pinyinKey = toPinyinCached(chunk);
+        if (!pinyinKey.isEmpty()) {
+            List<AdminMapping> adminPinyinMappings = adminMappingService.getEnabledMappingsByKey(pinyinKey);
+            for (AdminMapping adminMapping : adminPinyinMappings) {
+                Map<String, Object> candidate = new LinkedHashMap<>();
+                candidate.put("emoji", adminMapping.getEmoji());
+                candidate.put("source_word", adminMapping.getKey());
+                candidate.put("source_pinyin", pinyinKey);
+                candidate.put("priority", adminMapping.getPriority());
+                candidate.put("index_type", getAdminMappingIndexType(adminMapping));
+                candidate.put("description", adminMapping.getDescription());
+                allCandidates.add(candidate);
+            }
+
             Map<String, List<Map<String, Object>>> pinyinExactIndex = jsonDataService.getPinyinExactIndex();
             if (pinyinExactIndex.containsKey(pinyinKey)) {
                 allCandidates.addAll(pinyinExactIndex.get(pinyinKey));
@@ -296,6 +349,19 @@ public class EmojiConverterService {
         }
 
         return Collections.max(candidates, Comparator.comparingInt(this::getPriority));
+    }
+
+    private String getAdminMappingIndexType(AdminMapping adminMapping) {
+        if ("word".equals(adminMapping.getType())) {
+            return "word";
+        } else {
+            String key = adminMapping.getKey();
+            if (key != null && key.contains(" ")) {
+                return "pinyin_exact";
+            } else {
+                return "pinyin_syllable";
+            }
+        }
     }
 
     private int getPriority(Map<String, Object> candidate) {
