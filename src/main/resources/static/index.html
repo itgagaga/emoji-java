@@ -420,6 +420,146 @@
             font-weight: 600;
         }
 
+        .emoji-group {
+            border-bottom: 2px solid #f0f0f0;
+            padding: 8px 0;
+        }
+
+        .emoji-group:last-child {
+            border-bottom: none;
+        }
+
+        .group-header {
+            padding: 10px 16px;
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 12px;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fafafa;
+            border-radius: 8px;
+            margin: 4px 8px;
+        }
+
+        .group-header:hover {
+            background: #667eea10;
+        }
+
+        .group-header.selected {
+            background: #667eea20;
+            border-left: 3px solid #667eea;
+        }
+
+        .group-emoji {
+            font-size: 28px;
+        }
+
+        .group-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .group-word {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .group-pinyin {
+            color: #666;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .group-expand-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .group-expand-btn.expanded {
+            transform: rotate(180deg);
+        }
+
+        .variant-badge {
+            background: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .variant-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            margin-left: 20px;
+            border-left: 2px solid #667eea30;
+        }
+
+        .variant-list.show {
+            max-height: 500px;
+            padding: 8px 0;
+        }
+
+        .variant-item {
+            padding: 8px 12px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border-radius: 6px;
+            margin: 2px 8px;
+        }
+
+        .variant-item:hover {
+            background: #ff980010;
+        }
+
+        .variant-item.selected {
+            background: #ff980020;
+            border-left: 3px solid #ff9800;
+        }
+
+        .variant-emoji {
+            font-size: 22px;
+        }
+
+        .variant-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .variant-name {
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .variant-default-badge {
+            background: #4caf50;
+            color: white;
+            padding: 1px 5px;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
         .text-unchanged {
             color: #333;
             margin: 0 2px;
@@ -839,7 +979,7 @@
             try {
                 const enableFuzzy = document.getElementById('enableFuzzy').checked;
 
-                const response = await fetch(`${API_BASE}/api/lookup-candidates`, {
+                const response = await fetch(`${API_BASE}/api/lookup-candidates-grouped`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -851,37 +991,56 @@
 
                 const data = await response.json();
 
-                if (data.success && data.candidates.length > 0) {
-                    const totalCount = data.candidates.length;
+                if (data.success && data.groups.length > 0) {
+                    const groupCount = data.groups.length;
+                    const variantCount = data.total_variants || 0;
+                    
                     let html = '';
-                    data.candidates.forEach((cand, idx) => {
-                        const typeClass = `type-${cand.indexType}`;
-                        const typeLabel = getTypeLabel(cand.indexType);
-                        const variantCount = cand.variantCount || 0;
-                        const variantBadge = variantCount > 0
-                            ? `<span style="background:#ff9800; color:white; padding:2px 6px; border-radius:8px; font-size:10px; margin-left:6px;">+${variantCount}肤色</span>`
-                            : '';
-
+                    data.groups.forEach((group, idx) => {
+                        const typeClass = `type-${group.indexType}`;
+                        const typeLabel = getTypeLabel(group.indexType);
+                        const groupId = `group-${emojiId}-${idx}`;
+                        
                         html += `
-                            <div class="dropdown-item ${idx === 0 ? 'selected' : ''}"
-                                 onclick="selectEmoji('${emojiId}', '${cand.emoji}', this)">
-                                <div class="dropdown-emoji">${cand.emoji}${variantBadge}</div>
-                                <div class="dropdown-info">
-                                    <div class="dropdown-word">${escapeHtml(cand.sourceWord)}</div>
-                                    <div class="dropdown-pinyin">${escapeHtml(cand.sourcePinyin)}</div>
+                            <div class="emoji-group" id="${groupId}">
+                                <div class="group-header ${idx === 0 ? 'selected' : ''}"
+                                     onclick="selectGroup('${emojiId}', '${groupId}', '${group.baseEmoji}', this)">
+                                    <div class="group-emoji">${group.baseEmoji}</div>
+                                    <div class="group-info">
+                                        <div class="group-word">${escapeHtml(group.sourceWord)}</div>
+                                        <div class="group-pinyin">${escapeHtml(group.sourcePinyin)}</div>
+                                    </div>
+                                    <div class="dropdown-type ${typeClass}">${typeLabel}</div>
+                                    ${group.hasVariants ? `
+                                        <button class="group-expand-btn" 
+                                                onclick="event.stopPropagation(); toggleVariants('${groupId}')">
+                                            ▼
+                                        </button>
+                                        <span class="variant-badge">+${group.variants.length - 1}颜色</span>
+                                    ` : ''}
                                 </div>
-                                <div class="dropdown-type ${typeClass}">${typeLabel}</div>
+                                ${group.hasVariants ? `
+                                    <div class="variant-list" id="${groupId}-variants">
+                                        ${group.variants.map((v, vIdx) => `
+                                            <div class="variant-item ${v.isDefault && vIdx === 0 ? 'selected' : ''}"
+                                                 onclick="event.stopPropagation(); selectVariant('${emojiId}', '${groupId}', '${v.emoji}', this)">
+                                                <div class="variant-emoji">${v.emoji}</div>
+                                                <div class="variant-info">
+                                                    <span class="variant-name">${v.skinToneName}</span>
+                                                    ${v.isDefault ? '<span class="variant-default-badge">默认</span>' : ''}
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
                             </div>
                         `;
                     });
 
-                    const variantTotal = data.candidates.reduce((sum, c) => sum + (c.variantCount || 0), 0);
-                    const baseCount = totalCount;
-                    const originalCount = totalCount + variantTotal;
-
                     candidatesContainer.previousElementSibling.innerHTML =
-                        `"${escapeHtml(inputText)}" 的候选Emoji <span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px; font-size:12px; margin-left:8px;">${baseCount}个</span>` +
-                        (variantTotal > 0 ? `<span style="background:#ff9800; color:white; padding:2px 8px; border-radius:10px; font-size:12px; margin-left:4px;">已合并${variantTotal}个肤色变体</span>` : '') +
+                        `"${escapeHtml(inputText)}" 的候选Emoji` +
+                        `<span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px; font-size:12px; margin-left:8px;">${groupCount}组</span>` +
+                        (variantCount > 0 ? `<span style="background:#ff9800; color:white; padding:2px 8px; border-radius:10px; font-size:12px; margin-left:4px;">${variantCount}个变体</span>` : '') +
                         `<span style="float:right; font-size:12px; cursor:pointer;" onclick="closeAllDropdowns()">✕</span>`;
 
                     candidatesContainer.innerHTML = html;
@@ -918,6 +1077,54 @@
             }
 
             closeAllDropdowns();
+        }
+
+        function selectGroup(emojiId, groupId, emoji, headerElement) {
+            const display = document.querySelector(`#${emojiId}-container .emoji-display`);
+
+            if (display) {
+                display.innerHTML = `${emoji}<span style="font-size:12px; margin-left:4px;">▼</span>`;
+            }
+
+            document.querySelectorAll(`#${emojiId}-dropdown .group-header`).forEach(header => {
+                header.classList.remove('selected');
+            });
+            headerElement.classList.add('selected');
+
+            setTimeout(() => {
+                closeAllDropdowns();
+            }, 200);
+        }
+
+        function selectVariant(emojiId, groupId, variantEmoji, variantElement) {
+            const display = document.querySelector(`#${emojiId}-container .emoji-display`);
+
+            if (display) {
+                display.innerHTML = `${variantEmoji}<span style="font-size:12px; margin-left:4px;">▼</span>`;
+            }
+
+            document.querySelectorAll(`#${groupId}-variants .variant-item`).forEach(variant => {
+                variant.classList.remove('selected');
+            });
+            variantElement.classList.add('selected');
+
+            document.querySelectorAll(`#${emojiId}-dropdown .group-header`).forEach(header => {
+                header.classList.remove('selected');
+            });
+
+            setTimeout(() => {
+                closeAllDropdowns();
+            }, 200);
+        }
+
+        function toggleVariants(groupId) {
+            const variantList = document.getElementById(`${groupId}-variants`);
+            const expandBtn = document.querySelector(`#${groupId} .group-expand-btn`);
+
+            if (variantList && expandBtn) {
+                variantList.classList.toggle('show');
+                expandBtn.classList.toggle('expanded');
+            }
         }
 
         function closeAllDropdowns() {

@@ -1,6 +1,7 @@
 package com.emoji.converter.controller;
 
 import com.emoji.converter.model.dto.CandidateDTO;
+import com.emoji.converter.model.dto.CandidateGroupDTO;
 import com.emoji.converter.model.dto.ConvertRequest;
 import com.emoji.converter.model.dto.ConvertResponse;
 import com.emoji.converter.service.EmojiConverterService;
@@ -36,6 +37,27 @@ public class EmojiController {
         response.put("success", true);
         response.put("candidates", candidates);
         response.put("total_count", candidates.size());
+        response.put("error", "");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/lookup-candidates-grouped")
+    public ResponseEntity<Map<String, Object>> lookupCandidatesGrouped(@RequestBody Map<String, String> requestBody) {
+        String text = requestBody.get("text");
+
+        List<CandidateGroupDTO> groupedCandidates = emojiConverterService.lookupGroupedCandidates(text);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("groups", groupedCandidates);
+        response.put("total_groups", groupedCandidates.size());
+        
+        long totalVariants = groupedCandidates.stream()
+            .filter(g -> g.isHasVariants())
+            .mapToLong(g -> g.getVariants() != null ? g.getVariants().size() : 0)
+            .sum();
+        response.put("total_variants", totalVariants);
         response.put("error", "");
 
         return ResponseEntity.ok(response);

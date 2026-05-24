@@ -1,6 +1,7 @@
 package com.emoji.converter.service;
 
 import com.emoji.converter.model.dto.CandidateDTO;
+import com.emoji.converter.model.dto.CandidateGroupDTO;
 import com.emoji.converter.model.dto.ConvertRequest;
 import com.emoji.converter.model.dto.ConvertResponse;
 import com.emoji.converter.model.AdminMapping;
@@ -293,6 +294,158 @@ public class EmojiConverterService {
         }
 
         return deduplicateAndRank(allCandidates);
+    }
+
+    public List<CandidateGroupDTO> lookupGroupedCandidates(String chunk) {
+        List<Map<String, Object>> rawCandidates = new ArrayList<>();
+
+        List<AdminMapping> adminMappings = adminMappingService.getEnabledMappingsByKey(chunk);
+        for (AdminMapping adminMapping : adminMappings) {
+            Map<String, Object> candidate = new LinkedHashMap<>();
+            candidate.put("emoji", adminMapping.getEmoji());
+            candidate.put("source_word", adminMapping.getKey());
+            candidate.put("source_pinyin", "pinyin".equals(adminMapping.getType()) ? adminMapping.getKey() : toPinyinCached(adminMapping.getKey()));
+            candidate.put("priority", adminMapping.getPriority());
+            candidate.put("index_type", getAdminMappingIndexType(adminMapping));
+            candidate.put("description", adminMapping.getDescription());
+            rawCandidates.add(candidate);
+        }
+
+        Map<String, List<Map<String, Object>>> wordIndex = jsonDataService.getWordIndex();
+        if (wordIndex.containsKey(chunk)) {
+            rawCandidates.addAll(wordIndex.get(chunk));
+        }
+
+        String pinyinKey = toPinyinCached(chunk);
+        if (!pinyinKey.isEmpty()) {
+            List<AdminMapping> adminPinyinMappings = adminMappingService.getEnabledMappingsByKey(pinyinKey);
+            for (AdminMapping adminMapping : adminPinyinMappings) {
+                Map<String, Object> candidate = new LinkedHashMap<>();
+                candidate.put("emoji", adminMapping.getEmoji());
+                candidate.put("source_word", adminMapping.getKey());
+                candidate.put("source_pinyin", pinyinKey);
+                candidate.put("priority", adminMapping.getPriority());
+                candidate.put("index_type", getAdminMappingIndexType(adminMapping));
+                candidate.put("description", adminMapping.getDescription());
+                rawCandidates.add(candidate);
+            }
+
+            Map<String, List<Map<String, Object>>> pinyinExactIndex = jsonDataService.getPinyinExactIndex();
+            if (pinyinExactIndex.containsKey(pinyinKey)) {
+                rawCandidates.addAll(pinyinExactIndex.get(pinyinKey));
+            }
+
+            if (enableFuzzy) {
+                Map<String, List<Map<String, Object>>> pinyinFuzzyIndex = jsonDataService.getPinyinFuzzyIndex();
+                if (pinyinFuzzyIndex.containsKey(pinyinKey)) {
+                    rawCandidates.addAll(pinyinFuzzyIndex.get(pinyinKey));
+                }
+            }
+
+            if (chunk.length() == 1) {
+                Map<String, List<Map<String, Object>>> pinyinSyllableIndex = jsonDataService.getPinyinSyllableIndex();
+                if (pinyinSyllableIndex.containsKey(pinyinKey)) {
+                    rawCandidates.addAll(pinyinSyllableIndex.get(pinyinKey));
+                }
+            }
+        }
+
+        return groupAndRankCandidates(rawCandidates);
+    }
+
+    private List<CandidateGroupDTO> groupAndRankCandidates(List<Map<String, Object>> candidates) {
+        Map<String, Map<String, Object>> unique = new LinkedHashMap<>();
+        for (Map<String, Object> cand : candidates) {
+            String key = cand.get("emoji") + "|" + cand.get("source_word");
+            Map<String, Object> existing = unique.get(key);
+            if (existing == null || getPriority(cand) > getPriority(existing)) {
+                unique.put(key, cand);
+            }
+        }
+
+        Map<String, List<Map<String, Object>>> baseEmojiGroups = new LinkedHashMap<>();
+        for (Map<String, Object> cand : unique.values()) {
+            String emoji = (String) cand.get("emoji");
+            String base = getBaseEmoji(emoji);
+            baseEmojiGroups.computeIfAbsent(base, k -> new ArrayList<>()).add(cand);
+        }
+
+        List<CandidateGroupDTO> grouped = new ArrayList<>();
+        for (Map.Entry<String, List<Map<String, Object>>> entry : baseEmojiGroups.entrySet()) {
+            String baseEmoji = entry.getKey();
+            List<Map<String, Object>> groupCandidates = entry.getValue();
+
+            groupCandidates.sort(Comparator.comparingInt(c -> getPriority(c) * -1));
+
+            Map<String, Object> best = groupCandidates.get(0);
+            CandidateGroupDTO groupDto = new CandidateGroupDTO();
+            groupDto.setBaseEmoji(baseEmoji);
+            groupDto.setSourceWord((String) best.get("source_word"));
+            groupDto.setSourcePinyin((String) best.getOrDefault("source_pinyin", ""));
+            groupDto.setIndexType((String) best.get("index_type"));
+            groupDto.setPriority(getPriority(best));
+            groupDto.setDescription((String) best.get("description"));
+
+            if (groupCandidates.size() > 1) {
+                List<CandidateGroupDTO.SkinToneVariant> variants = new ArrayList<>();
+                boolean hasDefault = false;
+                
+                for (int i = 0; i < groupCandidates.size(); i++) {
+                    Map<String, Object> cand = groupCandidates.get(i);
+                    String emoji = (String) cand.get("emoji");
+                    
+                    CandidateGroupDTO.SkinToneVariant variant = new CandidateGroupDTO.SkinToneVariant();
+                    variant.setEmoji(emoji);
+                    variant.setSkinToneName(getSkinToneName(emoji));
+                    variant.setSkinToneCode(getSkinToneCode(emoji));
+                    variant.setDefault(i == 0);
+                    
+                    if (i == 0) {
+                        hasDefault = true;
+                    }
+                    
+                    variants.add(variant);
+                }
+                
+                groupDto.setVariants(variants);
+                groupDto.setHasVariants(true);
+            } else {
+                List<CandidateGroupDTO.SkinToneVariant> variants = new ArrayList<>();
+                CandidateGroupDTO.SkinToneVariant variant = new CandidateGroupDTO.SkinToneVariant();
+                variant.setEmoji(baseEmoji);
+                variant.setSkinToneName("默认");
+                variant.setSkinToneCode("default");
+                variant.setDefault(true);
+                variants.add(variant);
+                
+                groupDto.setVariants(variants);
+                groupDto.setHasVariants(false);
+            }
+            
+            grouped.add(groupDto);
+        }
+
+        return grouped.stream()
+                .sorted(Comparator.comparingInt(CandidateGroupDTO::getPriority).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private String getSkinToneName(String emoji) {
+        if (emoji.contains("🏻")) return "浅色";
+        if (emoji.contains("🏼")) return "中等浅色";
+        if (emoji.contains("🏽")) return "中等色";
+        if (emoji.contains("🏾")) return "深色";
+        if (emoji.contains("🏿")) return "最深色";
+        return "默认";
+    }
+
+    private String getSkinToneCode(String emoji) {
+        if (emoji.contains("🏻")) return "light";
+        if (emoji.contains("🏼")) return "medium-light";
+        if (emoji.contains("🏽")) return "medium";
+        if (emoji.contains("🏾")) return "dark";
+        if (emoji.contains("🏿")) return "dark-deep";
+        return "default";
     }
 
     private List<CandidateDTO> deduplicateAndRank(List<Map<String, Object>> candidates) {
