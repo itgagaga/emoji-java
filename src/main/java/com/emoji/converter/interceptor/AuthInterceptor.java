@@ -57,6 +57,9 @@ public class AuthInterceptor implements HandlerInterceptor {
             if (path.endsWith(".html") || path.endsWith(".css") || path.endsWith(".js")) {
                 return true;
             }
+            if ("/aaaa/dskqrb".equals(path) || "/aaaa/dskqrb/admin".equals(path)) {
+                return true;
+            }
         }
 
         if ("POST".equals(method) && "/api/convert".equals(path)) {

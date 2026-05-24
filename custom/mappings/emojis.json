@@ -1,1 +1,43 @@
-[{"emoji": "👀", "name": "eyes", "aliases": ["眼睛", "看", "注视", "观察", "盯着"], "keywords": ["eye", "look", "see", "watch"], "priority": 90, "category": "表情"}, {"emoji": "🤙", "name": "call me hand", "aliases": ["打电话", "联系我", "shaka", "hang loose"], "keywords": ["call", "phone", "hand", "gesture"], "priority": 85, "category": "手势"}, {"emoji": "🦥", "name": "sloth", "aliases": ["树懒", "懒人", "慢吞吞", "悠闲"], "keywords": ["sloth", "lazy", "slow", "animal"], "priority": 88, "category": "动物"}, {"emoji": "🧋", "name": "bubble tea", "aliases": ["奶茶", "珍珠奶茶", "波霸奶茶", "饮料"], "keywords": ["tea", "milk", "bubble", "drink", "boba"], "priority": 95, "category": "食物"}, {"emoji": "🎮", "name": "video game", "aliases": ["游戏", "打游戏", "电子游戏", "玩游戏"], "keywords": ["game", "gaming", "play", "controller"], "priority": 92, "category": "活动"}]
+[ {
+  "emoji" : "\uD83D\uDC40",
+  "name" : "eyes",
+  "aliases" : [ "眼睛", "看", "注视", "观察", "盯着" ],
+  "keywords" : [ "eye", "look", "see", "watch" ],
+  "priority" : 90,
+  "category" : "表情"
+}, {
+  "emoji" : "\uD83E\uDD19",
+  "name" : "call me hand",
+  "aliases" : [ "打电话", "联系我", "shaka", "hang loose" ],
+  "keywords" : [ "call", "phone", "hand", "gesture" ],
+  "priority" : 85,
+  "category" : "手势"
+}, {
+  "emoji" : "\uD83E\uDDA5",
+  "name" : "sloth",
+  "aliases" : [ "树懒", "懒人", "慢吞吞", "悠闲" ],
+  "keywords" : [ "sloth", "lazy", "slow", "animal" ],
+  "priority" : 88,
+  "category" : "动物"
+}, {
+  "emoji" : "\uD83E\uDDCB",
+  "name" : "bubble tea",
+  "aliases" : [ "奶茶", "珍珠奶茶", "波霸奶茶", "饮料" ],
+  "keywords" : [ "tea", "milk", "bubble", "drink", "boba" ],
+  "priority" : 95,
+  "category" : "食物"
+}, {
+  "emoji" : "\uD83C\uDFAE",
+  "name" : "video game",
+  "aliases" : [ "游戏", "打游戏", "电子游戏", "玩游戏" ],
+  "keywords" : [ "game", "gaming", "play", "controller" ],
+  "priority" : 92,
+  "category" : "活动"
+}, {
+  "emoji" : "\uD83D\uDE00",
+  "name" : "a",
+  "aliases" : [ "笑脸" ],
+  "keywords" : [ "1" ],
+  "category" : "表情",
+  "priority" : 80
+} ]
