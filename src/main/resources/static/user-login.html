@@ -248,6 +248,18 @@
             opacity: 0.8;
         }
 
+        .features-list {
+            text-align: left;
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+
+        .features-list li {
+            color: #666;
+            font-size: 0.85em;
+            line-height: 1.8;
+        }
+
         @media (max-width: 480px) {
             .auth-container {
                 max-width: 100%;
@@ -263,8 +275,8 @@
 <body>
     <div class="auth-container">
         <div class="auth-header">
-            <h1>🔐 Emoji 转换器</h1>
-            <p id="headerSubtitle">登录以继续</p>
+            <h1>🎭 Emoji 转换器</h1>
+            <p id="headerSubtitle">登录以解锁更多功能</p>
         </div>
 
         <div class="auth-body">
@@ -392,27 +404,38 @@
                     </div>
 
                     <button type="submit" class="submit-btn" id="registerBtn">
-                        ✨ 注册账号
+                        ✨ 免费注册
                     </button>
                 </form>
             </div>
 
             <div class="hint-text">
-                <p>
-                    🛡️ 安全登录系统<br>
-                    会话自动超时：1小时<br>
-                    数据存储于本地MySQL数据库
-                </p>
+                <p>🎁 注册即可享受：</p>
+                <ul class="features-list">
+                    <li>✅ 自定义Emoji映射规则</li>
+                    <li>✅ 管理个人转换偏好</li>
+                    <li>✅ 数据云端同步</li>
+                    <li>✅ 基础功能永久免费</li>
+                </ul>
             </div>
 
             <div class="back-link">
-                <a href="/">← 返回主应用</a>
+                <a href="/">← 返回首页（无需登录）</a>
             </div>
         </div>
     </div>
 
     <script>
         const API_BASE = '/api/auth';
+
+        // 页面加载时检查是否需要自动切换到注册Tab
+        window.addEventListener('load', function() {
+            if (window.location.hash === '#register') {
+                switchTab('register');
+            } else {
+                document.getElementById('loginUsername').focus();
+            }
+        });
 
         function switchTab(tab) {
             const loginTab = document.getElementById('loginTab');
@@ -426,15 +449,17 @@
                 registerTab.classList.remove('active');
                 loginPanel.classList.add('active');
                 registerPanel.classList.remove('active');
-                headerSubtitle.textContent = '登录以继续';
+                headerSubtitle.textContent = '登录以解锁更多功能';
                 document.getElementById('loginUsername').focus();
+                window.history.replaceState(null, null, '/login');  // 清除URL中的hash
             } else {
                 loginTab.classList.remove('active');
                 registerTab.classList.add('active');
                 loginPanel.classList.remove('active');
                 registerPanel.classList.add('active');
-                headerSubtitle.textContent = '创建新账户';
+                headerSubtitle.textContent = '创建免费账户';
                 document.getElementById('regUsername').focus();
+                window.history.replaceState(null, null, '/login#register');  // 在URL中添加hash
             }
 
             hideMessages();
@@ -500,19 +525,20 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    showSuccess('✅ 登录成功！正在跳转...');
-                    
+                    showSuccess('✅ 登录成功！正在跳转到首页...');
+
                     localStorage.setItem('auth_token', data.token);
                     localStorage.setItem('auth_user', JSON.stringify(data.user));
                     localStorage.setItem('auth_expires', Date.now() + data.expires_in * 1000);
 
+                    // 延迟跳转到首页（不是管理后台）
                     setTimeout(() => {
-                        window.location.href = '/aaaa/dskqrb/admin';
+                        window.location.href = '/';
                     }, 800);
 
                 } else {
                     showError(data.error || '用户名或密码错误');
-                    
+
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = '🚀 登录';
                     document.getElementById('loginPassword').value = '';
@@ -521,7 +547,7 @@
 
             } catch (error) {
                 showError('网络错误，请稍后重试');
-                
+
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '🚀 登录';
             }
@@ -571,35 +597,31 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    showSuccess('✅ 注册成功！正在跳转...');
-                    
+                    showSuccess('✅ 注册成功！欢迎加入！');
+
                     localStorage.setItem('auth_token', data.token);
                     localStorage.setItem('auth_user', JSON.stringify(data.user));
                     localStorage.setItem('auth_expires', Date.now() + data.expires_in * 1000);
 
+                    // 延迟跳转到首页
                     setTimeout(() => {
-                        window.location.href = '/aaaa/dskqrb/admin';
+                        window.location.href = '/';
                     }, 800);
 
                 } else {
                     showError(data.error || '注册失败');
-                    
+
                     registerBtn.disabled = false;
-                    registerBtn.innerHTML = '✨ 注册账号';
+                    registerBtn.innerHTML = '✨ 免费注册';
                 }
 
             } catch (error) {
                 showError('网络错误，请稍后重试');
-                
+
                 registerBtn.disabled = false;
-                registerBtn.innerHTML = '✨ 注册账号';
+                registerBtn.innerHTML = '✨ 免费注册';
             }
         }
-
-        // 自动聚焦
-        window.addEventListener('load', () => {
-            document.getElementById('loginUsername').focus();
-        });
     </script>
 </body>
 </html>
