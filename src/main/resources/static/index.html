@@ -1011,25 +1011,7 @@
                 }
 
                 const emojiId = `${mode}-emoji-${index}`;
-                resultHtml += `
-                    <div class="emoji-select" id="${emojiId}-container">
-                        <div class="emoji-display" onclick="toggleDropdown('${emojiId}', '${escapeHtml(inputStr)}', '${mode}')">
-                            ${detail.emoji}
-                            <span style="font-size:12px; margin-left:4px;">▼</span>
-                        </div>
-                        <div class="emoji-dropdown" id="${emojiId}-dropdown">
-                            <div class="dropdown-header">
-                                "${escapeHtml(inputStr)}" 的候选Emoji
-                                <span style="float:right; font-size:12px; cursor:pointer;" onclick="closeAllDropdowns()">✕</span>
-                            </div>
-                            <div id="${emojiId}-candidates">
-                                <div style="padding:20px; text-align:center; color:#999;">
-                                    <span class="loading"></span> 加载中...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                resultHtml += `<div class="emoji-select" id="${emojiId}-container"><div class="emoji-display" onclick="toggleDropdown('${emojiId}', '${escapeHtml(inputStr)}', '${mode}')">${detail.emoji}<span class="emoji-arrow" style="font-size:12px; margin-left:4px;">▼</span></div><div class="emoji-dropdown" id="${emojiId}-dropdown"><div class="dropdown-header">"${escapeHtml(inputStr)}" 的候选Emoji<span style="float:right; font-size:12px; cursor:pointer;" onclick="closeAllDropdowns()">✕</span></div><div id="${emojiId}-candidates"><div style="padding:20px; text-align:center; color:#999;"><span class="loading"></span> 加载中...</div></div></div></div>`;
 
                 posInOriginal = originalText.indexOf(inputStr, posInOriginal) + inputStr.length;
             });
@@ -1158,7 +1140,7 @@
 
             if (display) {
                 const oldContent = display.innerHTML;
-                display.innerHTML = `${newEmoji}<span style="font-size:12px; margin-left:4px;">▼</span>`;
+                display.innerHTML = `${newEmoji}<span class="emoji-arrow" style="font-size:12px; margin-left:4px;">▼</span>`;
 
                 document.querySelectorAll(`#${emojiId}-dropdown .dropdown-item`).forEach(item => {
                     item.classList.remove('selected');
@@ -1173,7 +1155,7 @@
             const display = document.querySelector(`#${emojiId}-container .emoji-display`);
 
             if (display) {
-                display.innerHTML = `${emoji}<span style="font-size:12px; margin-left:4px;">▼</span>`;
+                display.innerHTML = `${emoji}<span class="emoji-arrow" style="font-size:12px; margin-left:4px;">▼</span>`;
             }
 
             document.querySelectorAll(`#${emojiId}-dropdown .group-header`).forEach(header => {
@@ -1190,7 +1172,7 @@
             const display = document.querySelector(`#${emojiId}-container .emoji-display`);
 
             if (display) {
-                display.innerHTML = `${variantEmoji}<span style="font-size:12px; margin-left:4px;">▼</span>`;
+                display.innerHTML = `${variantEmoji}<span class="emoji-arrow" style="font-size:12px; margin-left:4px;">▼</span>`;
             }
 
             document.querySelectorAll(`#${groupId}-variants .variant-item`).forEach(variant => {
@@ -1283,6 +1265,12 @@
             return div.innerHTML;
         }
 
+        function getEmojiFromDisplay(display) {
+            const clone = display.cloneNode(true);
+            clone.querySelectorAll('.emoji-arrow, span').forEach(el => el.remove());
+            return clone.textContent.trim();
+        }
+
         function showError(message) {
             const wordContainer = document.getElementById('wordDetailsContainer');
             const charContainer = document.getElementById('charDetailsContainer');
@@ -1307,26 +1295,15 @@
                 return;
             }
 
-            let text = '';
-
             const emojiDisplays = outputArea.querySelectorAll('.emoji-display');
-            if (emojiDisplays.length > 0) {
-                outputArea.childNodes.forEach(node => {
-                    if (node.classList && node.classList.contains('text-unchanged')) {
-                        text += node.textContent;
-                    } else if (node.classList && node.classList.contains('emoji-select')) {
-                        const display = node.querySelector('.emoji-display');
-                        if (display) {
-                            const emojiChar = display.textContent.replace('▼', '').trim();
-                            text += emojiChar;
-                        }
-                    } else if (node.nodeType === Node.TEXT_NODE) {
-                        text += node.textContent;
-                    }
-                });
-            } else {
-                text = outputArea.textContent;
+            if (emojiDisplays.length === 0) {
+                alert('没有可复制的内容');
+                return;
             }
+
+            const text = Array.from(emojiDisplays)
+                .map(display => getEmojiFromDisplay(display))
+                .join('');
 
             if (!text) {
                 alert('没有可复制的内容');

@@ -16,7 +16,7 @@ public class EmojiConverterApplication {
         System.out.println("╚══════════════════════════════════════════════════╝");
         SpringApplication.run(EmojiConverterApplication.class, args);
         System.out.println("✅ Emoji Converter 已启动!");
-        System.out.println("   🌐 主应用: http://localhost:8080/");
-        System.out.println("   ⚙️  Admin: http://localhost:8080/aaaa/dskqrb");
+        System.out.println("   🌐 主应用: http://localhost:7080/");
+        System.out.println("   ⚙️  Admin: http://localhost:7080/aaaa/dskqrb");
     }
 }
