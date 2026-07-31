@@ -12,7 +12,7 @@ public class EmojiConverterApplication {
     public static void main(String[] args) {
         System.out.println("╔══════════════════════════════════════════════════╗");
         System.out.println("║     🎭 Emoji Converter - Spring Boot 版       ║");
-        System.out.println("║     智能中文文字转Emoji转换引擎                ║");
+        System.out.println("║     智能中文文字转Emoji转换引擎                 ║");
         System.out.println("╚══════════════════════════════════════════════════╝");
         SpringApplication.run(EmojiConverterApplication.class, args);
         System.out.println("✅ Emoji Converter 已启动!");
